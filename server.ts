@@ -48,40 +48,50 @@ async function startServer() {
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
-          systemInstruction: "You are an expert workspace intelligence assistant specializing in summarizing unstructured Slack status updates. Extract the date (YYYY-MM-DD format based on message context, default to today's date 2026-06-20 if no specific date is mentioned), employee name, primary project name, achievements/progress (as a clean array of strings), blockers/dependencies (as a clean array of strings), and next steps/plans (as a clean array of strings).",
+          systemInstruction: "You are an expert workspace intelligence assistant specializing in summarizing unstructured Slack status updates. Extract all individual employee status reports found in the text. For each person, extract their date (YYYY-MM-DD format based on message context, default to today's date 2026-06-20 if no specific date is mentioned), employee name, primary project name, achievements/progress (as an array of strings), blockers/dependencies (as an array of strings), and next steps/plans (as an array of strings).",
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              date: {
-                type: Type.STRING,
-                description: "ISO date or readable date (e.g., '2026-06-20')",
-              },
-              employee_name: {
-                type: Type.STRING,
-                description: "The name of the employee or username reporting status. Inferred or 'Unknown' if not found.",
-              },
-              project_name: {
-                type: Type.STRING,
-                description: "The title of the main project. Inferred or 'General' if not found.",
-              },
-              progress: {
+              reports: {
                 type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "Concise items marking tasks completed, achievements, or values delivered.",
-              },
-              blockers: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "Impediments, blockers, visual obstacles, or wait periods. Return empty array if none.",
-              },
-              plan: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "Future tasks, next actions, or goals for the next period. Return empty array if none.",
-              },
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    date: {
+                      type: Type.STRING,
+                      description: "ISO date or readable date (e.g., '2026-06-20')",
+                    },
+                    employee_name: {
+                      type: Type.STRING,
+                      description: "The name of the employee or username reporting status. Inferred or 'Unknown' if not found.",
+                    },
+                    project_name: {
+                      type: Type.STRING,
+                      description: "The title of the main project. Inferred or 'General' if not found.",
+                    },
+                    progress: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: "Concise items marking tasks completed, achievements, or values delivered.",
+                    },
+                    blockers: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: "Impediments, blockers, visual obstacles, or wait periods. Return empty array if none.",
+                    },
+                    plan: {
+                      type: Type.ARRAY,
+                      items: { type: Type.STRING },
+                      description: "Future tasks, next actions, or goals for the next period. Return empty array if none.",
+                    },
+                  },
+                  required: ["date", "employee_name", "project_name", "progress", "blockers", "plan"],
+                },
+                description: "Array of extracted status updates for each individual developer or user found in the raw input update text.",
+              }
             },
-            required: ["date", "employee_name", "project_name", "progress", "blockers", "plan"],
+            required: ["reports"],
           },
         }
       });

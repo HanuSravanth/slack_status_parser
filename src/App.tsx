@@ -143,25 +143,40 @@ export default function App() {
 
       const data = await res.json();
       
-      // Make parsed summary structure
-      const newEntry: SlackProgressSummary = {
-        id: "status-" + Math.random().toString(36).substr(2, 9),
-        date: data.date || new Date().toISOString().split('T')[0],
-        employee_name: data.employee_name || "Unknown Author",
-        project_name: data.project_name || "General Work",
-        progress: Array.isArray(data.progress) ? data.progress : [data.progress],
-        blockers: Array.isArray(data.blockers) ? data.blockers : [data.blockers].filter(Boolean),
-        plan: Array.isArray(data.plan) ? data.plan : [data.plan],
-        raw_text: pastedText,
-        created_at: new Error().stack ? new Date().toISOString() : "2026-06-20T00:00:00Z",
-      };
+      // Parse list of reports dynamically (supporting modern multi-user extraction)
+      let reportsToSave: any[] = [];
+      if (data && Array.isArray(data.reports)) {
+        reportsToSave = data.reports;
+      } else if (Array.isArray(data)) {
+        reportsToSave = data;
+      } else if (data && typeof data === "object") {
+        reportsToSave = [data];
+      }
 
-      // Prepended record
-      const updated = [newEntry, ...history];
+      if (reportsToSave.length === 0) {
+        throw new Error("No status items could be extracted from the pasted Slack text.");
+      }
+
+      const newEntries: SlackProgressSummary[] = reportsToSave.map((item: any, index: number) => {
+        return {
+          id: "status-" + Math.random().toString(36).substr(2, 9) + "-" + index,
+          date: item.date || new Date().toISOString().split('T')[0],
+          employee_name: item.employee_name || "Unknown Author",
+          project_name: item.project_name || "General Work",
+          progress: Array.isArray(item.progress) ? item.progress : (item.progress ? [item.progress] : []),
+          blockers: Array.isArray(item.blockers) ? item.blockers : (item.blockers ? [item.blockers] : []),
+          plan: Array.isArray(item.plan) ? item.plan : (item.plan ? [item.plan] : []),
+          raw_text: index === 0 ? pastedText : undefined, // Keep raw reference on first entry
+          created_at: new Date().toISOString(),
+        };
+      });
+
+      // Prepended status updates
+      const updated = [...newEntries, ...history];
       updateHistory(updated);
       
       setPastedText("");
-      showToast("Successfully extracted with Gemini 2.5 Flash status metrics!", "success");
+      showToast(`Successfully extracted ${newEntries.length} status updates!`, "success");
       // Seamless direct navigation to dashboard
       setCurrentPage("dashboard");
     } catch (err: any) {
