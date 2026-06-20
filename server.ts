@@ -34,7 +34,7 @@ async function startServer() {
 
   // API endpoint for status extraction
   app.post("/api/extract", async (req, res) => {
-    const { text } = req.body;
+    const { text, clientDate } = req.body;
     if (!text || typeof text !== "string" || !text.trim()) {
       return res.status(400).json({ error: "No Slack text provided for extraction" });
     }
@@ -42,13 +42,17 @@ async function startServer() {
     try {
       const ai = getAiClient();
       
+      const targetDate = (clientDate && typeof clientDate === "string" && clientDate.trim())
+        ? clientDate.trim()
+        : new Date().toISOString().split('T')[0];
+      
       const prompt = `Please extract structured daily status information from this unstructured Slack message:\n\n${text}`;
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
-          systemInstruction: "You are an expert workspace intelligence assistant specializing in summarizing unstructured Slack status updates. Extract all individual employee status reports found in the text. For each person, extract their date (YYYY-MM-DD format based on message context, default to today's date 2026-06-20 if no specific date is mentioned), employee name, primary project name, achievements/progress (as an array of strings), blockers/dependencies (as an array of strings), and next steps/plans (as an array of strings).",
+          systemInstruction: `You are an expert workspace intelligence assistant specializing in summarizing unstructured Slack status updates. Extract all individual employee status reports found in the text. For each person, extract their date (YYYY-MM-DD format based on message context, default to today's date ${targetDate} if no specific date is mentioned), employee name, primary project name, achievements/progress (as an array of strings), blockers/dependencies (as an array of strings), and next steps/plans (as an array of strings).`,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,

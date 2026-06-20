@@ -33,10 +33,12 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const { text } = req.body || {};
+  const { text, clientDate } = req.body || {};
   if (!text || typeof text !== "string" || !text.trim()) {
     return res.status(400).json({ error: "No Slack text provided for extraction" });
   }
+
+  const referenceDate = clientDate || "2026-06-20";
 
   try {
     const ai = getAiClient();
@@ -47,7 +49,7 @@ export default async function handler(req: any, res: any) {
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
-        systemInstruction: "You are an expert workspace intelligence assistant specializing in summarizing unstructured Slack status updates. Extract all individual employee status reports found in the text. For each person, extract their date (YYYY-MM-DD format based on message context, default to today's date 2026-06-20 if no specific date is mentioned), employee name, primary project name, achievements/progress (as an array of strings), blockers/dependencies (as an array of strings), and next steps/plans (as an array of strings).",
+        systemInstruction: `You are an expert workspace intelligence assistant specializing in summarizing unstructured Slack status updates. Extract all individual employee status reports found in the text. For each person, extract their date (YYYY-MM-DD format based on message context, default to today's date ${referenceDate} if no specific date is mentioned), employee name, primary project name, achievements/progress (as an array of strings), blockers/dependencies (as an array of strings), and next steps/plans (as an array of strings).`,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
