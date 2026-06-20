@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/extract", "destination": "/api/extract.ts" },
+    { "source": "/api/email", "destination": "/api/email.ts" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
