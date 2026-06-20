@@ -1,0 +1,6 @@
+{
+  "name": "Slack Status Summarizer",
+  "description": "A minimal, modern workspace helper to paste unstructured Slack updates, automatically extract structured status metrics using Gemini 2.5 Flash, and compile them in a daily analytics dashboard with email exporting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
